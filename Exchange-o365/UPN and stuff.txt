@@ -57,3 +57,14 @@ foreach ($users in $user) {
      Add-ADGroupMember -Identity "AADC" -Members $sam
 }
 
+
+---------------
+
+#Change UPN auf USers in OU to vorname.nachname@example.com
+
+Import-Module ActiveDirectory
+Get-ADUser -Filter * -SearchBase 'OU=TestAccounts,OU=Accounts,DC=my,DC=domain,DC=com' | ForEach-Object {
+	$UpdatedUPN = $_.GivenName + "." + $_.Surname + "@my.domain.com"
+	$_ | Set-ADUser -UserPrincipalName $UpdatedUPN
+}
+

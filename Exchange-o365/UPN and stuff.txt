@@ -1,0 +1,59 @@
+# Users mit Attribut "mail" UPN ändern
+
+Get-ADUser -Properties mail -Filter {mail -like '*'} | Select SAMAccountName, mail
+
+
+$user = Get-ADUser -Properties mail -Filter {mail -like '*'} | Select SAMAccountName, mail
+
+foreach ($users in $user) {
+     write-host processing $user.samaccountname -nonewline
+
+     [string]$sam = $users.samaccountname
+     [string]$upn = $users.mail
+
+     if ($user.UserPrincipalName -eq $upn){
+       write-host "  UPN bereits ok: $upn" -background green -foreground black
+       }
+       else {
+        set-aduser -identity $sam -UserPrincipalName $upn
+        write-host "  UPN wurde angepasst:$upn" -backgroundcolor yellow
+       }
+}
+
+---------------
+
+# Users mit Attribut "proxyAddresses" zu routable Domain ändern
+# Get all the users who have proxyAddresses under the domain
+
+foreach ($user in (Get-ADUser -SearchBase "DC=contoso,DC=local" -LdapFilter '(proxyAddresses=*)')) {
+
+# Grab the primary SMTP address
+
+$address = Get-ADUser $user -Properties proxyAddresses | Select -Expand proxyAddresses | Where {$_ -clike "SMTP:*"}
+
+# Remove the protocol specification from the start of the address
+
+$newUPN = $address.SubString(5)
+
+# Update the user with their new UPN
+
+Set-ADUser $user -UserPrincipalName $newUPN
+
+}
+
+
+---------------
+
+#Users mit Attribut "mail" zu Gruppe XXX hinzufügen
+
+$user = Get-ADUser -Properties mail -Filter {mail -like '*'} | Select SAMAccountName, mail
+
+foreach ($users in $user) {
+     write-host processing $user.samaccountname -nonewline
+
+     [string]$sam = $users.samaccountname
+     [string]$upn = $users.mail
+
+     Add-ADGroupMember -Identity "AADC" -Members $sam
+}
+

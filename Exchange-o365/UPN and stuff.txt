@@ -68,3 +68,36 @@ Get-ADUser -Filter * -SearchBase 'OU=TestAccounts,OU=Accounts,DC=my,DC=domain,DC
 	$_ | Set-ADUser -UserPrincipalName $UpdatedUPN
 }
 
+---------------
+
+#Lese $mail und setze es als Alias unter $proxyAddresses
+
+$Users = Get-ADUser -filter * -SearchBase "ou=YourOU,dc=YourCompany,dc=com" -Properties mail
+
+foreach ($user in $users ){
+
+   $Secondary = "smtp:" + $User.mail
+
+   Set-ADUser $User.SamAccountName -Add @{'ProxyAddresses'=$Secondary}
+
+}
+
+---------------
+
+#### Alte Mail zu Alias und neue Mail aus Vorname.Nachnahme@domain.com
+
+
+$Users = Get-ADUser -Filter * -SearchBase 'OU=User_managed,DC=domain,DC=com' -Properties mail
+
+foreach ($user in $users ){
+   $Secondary = "smtp:" + $User.mail
+   Set-ADUser $User.SamAccountName -Add @{'ProxyAddresses'=$Secondary}
+}
+
+
+Get-ADUser -Filter * -SearchBase 'OU=User_managed,DC=domain,DC=com' | ForEach-Object {
+	$UpdatedUPN = $_.GivenName + "." + $_.Surname + "@domain.com"
+	$_ | Set-ADUser -UserPrincipalName $UpdatedUPN
+	$_ | Set-ADUser -EmailAddress $UpdatedUPN
+}
+
